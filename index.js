@@ -25,6 +25,9 @@ async function run() {
 
         const db = client.db('ship_sync_db')
         const productsCollection = db.collection('products')
+        const importsCollection = db.collection('imports')
+
+        // Products APIs
 
         app.get('/products', async(req, res)=>{
             const cursor = productsCollection.find()
@@ -35,6 +38,20 @@ async function run() {
         app.get('/latestProducts', async(req,res)=>{
             const cursor = productsCollection.find().sort({created_at: -1}).limit(6)
             const result = await cursor.toArray()
+            res.send(result)
+        })
+
+        // Imported Products APIs
+
+        app.get('/imports', async(req, res)=>{
+            const cursor = importsCollection.find()
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+
+        app.post('/imports', async(req, res)=>{
+            const newProduct = req.body
+            const result = await importsCollection.insertOne(newProduct)
             res.send(result)
         })
         
