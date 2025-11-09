@@ -7,7 +7,7 @@ const port = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.eqwoetz.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
@@ -78,6 +78,26 @@ async function run() {
             }
             const options = { upsert: true }
             const result = await importsCollection.updateOne(query, update, options)
+            res.send(result)
+        })
+
+        app.delete('/imports/:id', async(req, res)=>{
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+
+            const importItem = await importsCollection.findOne(query)
+            if(!importItem){
+                return res.status(404).send({ message: "Import not found" })
+            }
+
+            const result = await importsCollection.deleteOne(query)
+
+            if(result.deletedCount){
+                await productsCollection.updateOne(
+                    {_id: importItem?.product},
+                    {$inc: {available_quantity: importItem.importing_quantity}}
+                )
+            }
             res.send(result)
         })
 
