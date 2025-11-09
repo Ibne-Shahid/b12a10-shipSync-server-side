@@ -43,10 +43,10 @@ async function run() {
 
         app.patch('/products/:id', async (req, res) => {
             const id = req.params.id
-            const { available_quantity } = req.body
-            const query = { _id: id }
+            const {decreaseBy} = req.body
+            const query = {_id: id}
             const updatedProduct = {
-                $set: { available_quantity }
+                $inc: { available_quantity: -parseInt(decreaseBy) }
             }
             const result = await productsCollection.updateOne(query, updatedProduct)
             res.send(result)
