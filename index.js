@@ -41,6 +41,17 @@ async function run() {
             res.send(result)
         })
 
+        app.patch('/products/:id', async(req, res)=>{
+            const id = req.params.id
+            const {available_quantity} = req.body
+            const query = {_id: id}
+            const updatedProduct = {
+                $set: {available_quantity}
+            }
+            const result = await productsCollection.updateOne(query, updatedProduct)
+            res.send(result)
+        })
+
         // Imported Products APIs
 
         app.get('/imports', async(req, res)=>{
@@ -50,8 +61,8 @@ async function run() {
         })
 
         app.post('/imports', async(req, res)=>{
-            const newProduct = req.body
-            const result = await importsCollection.insertOne(newProduct)
+            const importProduct = req.body
+            const result = await importsCollection.insertOne(importProduct)
             res.send(result)
         })
         
