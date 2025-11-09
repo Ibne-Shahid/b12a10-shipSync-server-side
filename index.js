@@ -20,7 +20,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        
+
         await client.connect();
 
         const db = client.db('ship_sync_db')
@@ -29,24 +29,24 @@ async function run() {
 
         // Products APIs
 
-        app.get('/products', async(req, res)=>{
+        app.get('/products', async (req, res) => {
             const cursor = productsCollection.find()
             const result = await cursor.toArray()
             res.send(result)
         })
 
-        app.get('/latestProducts', async(req,res)=>{
-            const cursor = productsCollection.find().sort({created_at: -1}).limit(6)
+        app.get('/latestProducts', async (req, res) => {
+            const cursor = productsCollection.find().sort({ created_at: -1 }).limit(6)
             const result = await cursor.toArray()
             res.send(result)
         })
 
-        app.patch('/products/:id', async(req, res)=>{
+        app.patch('/products/:id', async (req, res) => {
             const id = req.params.id
-            const {available_quantity} = req.body
-            const query = {_id: id}
+            const { available_quantity } = req.body
+            const query = { _id: id }
             const updatedProduct = {
-                $set: {available_quantity}
+                $set: { available_quantity }
             }
             const result = await productsCollection.updateOne(query, updatedProduct)
             res.send(result)
@@ -54,22 +54,29 @@ async function run() {
 
         // Imported Products APIs
 
-        app.get('/imports', async(req, res)=>{
+        app.get('/imports', async (req, res) => {
             const cursor = importsCollection.find()
             const result = await cursor.toArray()
             res.send(result)
         })
 
-        app.post('/imports', async(req, res)=>{
+        app.post('/imports', async (req, res) => {
             const importProduct = req.body
-            const result = await importsCollection.insertOne(importProduct)
+            const { product, importer_email, importing_quantity, importer_name } = importProduct
+            const query = { product, importer_email }
+            const update = {
+                $setOnInsert: { importer_name },
+                $inc: { importing_quantity: parseInt(importing_quantity) }
+            }
+            const options = { upsert: true }
+            const result = await importsCollection.updateOne(query, update, options)
             res.send(result)
         })
-        
+
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
-        
+
         // await client.close();
     }
 }
