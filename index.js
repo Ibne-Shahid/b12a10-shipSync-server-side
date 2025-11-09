@@ -55,7 +55,15 @@ async function run() {
         // Imported Products APIs
 
         app.get('/imports', async (req, res) => {
-            const cursor = importsCollection.find()
+            
+            const email = req.query.email
+            const query = {}
+            if(email){
+                query.importer_email = email
+            }
+           
+
+            const cursor = importsCollection.find(query)
             const result = await cursor.toArray()
             res.send(result)
         })
