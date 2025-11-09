@@ -41,6 +41,13 @@ async function run() {
             res.send(result)
         })
 
+        app.post('/products', async(req, res)=>{
+            const newProduct = req.body
+            newProduct.created_at = new Date()
+            const result = await productsCollection.insertOne(newProduct)
+            res.send(result)
+        })
+
         app.patch('/products/:id', async (req, res) => {
             const id = req.params.id
             const {decreaseBy} = req.body
