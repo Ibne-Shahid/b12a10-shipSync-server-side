@@ -33,8 +33,8 @@ async function run() {
 
             const email = req.query.email
             const query = {}
-            if(email){
-                query.exporter_email= email
+            if (email) {
+                query.exporter_email = email
             }
 
             const cursor = productsCollection.find(query)
@@ -48,17 +48,10 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/products', async(req, res)=>{
-            const newProduct = req.body
-            newProduct.created_at = new Date()
-            const result = await productsCollection.insertOne(newProduct)
-            res.send(result)
-        })
-
         app.patch('/products/:id', async (req, res) => {
             const id = req.params.id
-            const {decreaseBy} = req.body
-            const query = {_id: id}
+            const { decreaseBy } = req.body
+            const query = { _id: id }
             const updatedProduct = {
                 $inc: { available_quantity: -parseInt(decreaseBy) }
             }
@@ -66,23 +59,55 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/products/:id', async(req, res)=>{
+        // Exported Products APIs
+
+        app.post('/products', async (req, res) => {
+            const newProduct = req.body
+            newProduct.created_at = new Date()
+            const result = await productsCollection.insertOne(newProduct)
+            res.send(result)
+        })
+
+        app.delete('/products/:id', async (req, res) => {
             const id = req.params.id
-            const query = { _id: new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const result = await productsCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        app.patch('/exportedProducts/:id', async (req, res) => {
+            const id = req.params.id
+            const updatedProductDetails = req.body
+
+            const { product_image, product_name, price, origin_country, rating, available_quantity, description } = updatedProductDetails
+
+            const query = { _id: new ObjectId(id) }
+            const updatedProduct = {
+                $set: {
+                    product_image,
+                    product_name,
+                    price,
+                    origin_country,
+                    rating,
+                    available_quantity,
+                    description,
+                    updated_at: new Date()
+                }
+            }
+            const result = await productsCollection.updateOne(query, updatedProduct)
             res.send(result)
         })
 
         // Imported Products APIs
 
         app.get('/imports', async (req, res) => {
-            
+
             const email = req.query.email
             const query = {}
-            if(email){
+            if (email) {
                 query.importer_email = email
             }
-           
+
 
             const cursor = importsCollection.find(query)
             const result = await cursor.toArray()
@@ -102,21 +127,21 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/imports/:id', async(req, res)=>{
+        app.delete('/imports/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: new ObjectId(id) }
 
             const importItem = await importsCollection.findOne(query)
-            if(!importItem){
+            if (!importItem) {
                 return res.status(404).send({ message: "Import not found" })
             }
 
             const result = await importsCollection.deleteOne(query)
 
-            if(result.deletedCount){
+            if (result.deletedCount) {
                 await productsCollection.updateOne(
-                    {_id: importItem?.product},
-                    {$inc: {available_quantity: importItem.importing_quantity}}
+                    { _id: importItem?.product },
+                    { $inc: { available_quantity: importItem.importing_quantity } }
                 )
             }
             res.send(result)
